@@ -23,12 +23,7 @@ Columns include age, income, loan amount, credit score, months employed, number 
 
 Download the dataset from Kaggle and place Loan_default.csv in the project folder. Check the dataset's license on Kaggle before redistributing it.
 
-Project Structure
-Bank-Loan-Portfolio-Default-Risk-Analysis/
-├── Bank_Loan_Default_Analysis.ipynb          # cleaning, feature engineering, risk score, load to PostgreSQL
-├── Bank_Loan_Default_Analysis_Queries.sql    # 14 SQL questions with queries
-├── Loan_default.csv                          # raw dataset (download from Kaggle)
-└── README.md
+
 Methodology
 1. Data cleaning (Python)
 Checked nulls, duplicate rows and duplicate loan IDs. The data had none.
