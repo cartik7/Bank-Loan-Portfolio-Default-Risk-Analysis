@@ -38,7 +38,6 @@ The goal is to turn raw loan data into risk insights that support lending decisi
 | Outcome | Default |
 | Engineered Features | Age Group, Income Group, Borrower Segment, EMI, EMI-to-Income, Risk Score, Risk Tier |
 
-> The dataset is not included in this repository. Download `Loan_default.csv` from Kaggle and place it in the project folder.
 
 ---
 
