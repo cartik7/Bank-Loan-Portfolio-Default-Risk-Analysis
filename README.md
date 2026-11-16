@@ -1,109 +1,152 @@
-Bank Loan Portfolio & Default Risk Analysis
+# Bank-Loan-Portfolio-Default-Risk-Analysis
 
-End-to-end analysis of a retail loan portfolio: data cleaning and feature engineering in Python (Pandas, NumPy), a composite 0–100 credit risk score, and 14 PostgreSQL queries to measure NPA %, rank default risk, check underwriting policy breaches, and uncover "silent risk" among borrowers with high credit scores.
+## 📌 Project Overview
 
-Tools: Python · Pandas · NumPy · PostgreSQL · SQL (CTEs, window functions, JOINs, subqueries)
+This project analyzes a retail bank loan portfolio using Python, SQL and PostgreSQL to measure default risk, build a credit risk score, and find borrowers that a credit score alone would miss.
 
-Business Problem
+The analysis is based on 255,347 loan records containing borrower demographics, income and credit details, loan terms, loan purpose, co-signer information and the final default outcome.
 
-A retail bank wants to know:
+The goal is to turn raw loan data into risk insights that support lending decisions, underwriting policy checks and portfolio monitoring.
 
-How bad is the loan book? (default rate and NPA %)
-Which loan purposes and borrower segments carry the most default risk?
-Are underwriting DTI limits being respected, and do breaches default more?
-Does a credit score alone catch risky borrowers, or does a multi-factor score see more?
-Dataset
-Item	Detail
-Name	Loan Default Prediction Dataset
-Source	Kaggle, uploaded by Nikhil Bhadoriya (nikhil1e9/loan-default), originally from Coursera's Loan Default Prediction Challenge
-Size	255,347 loans, 18 columns
-Target	Default (1 = defaulted, 0 = repaying)
+---
 
-Columns include age, income, loan amount, credit score, months employed, number of credit lines, interest rate, loan term, DTI ratio, education, employment type, marital status, mortgage, dependents, loan purpose and co-signer.
+## 🎯 Business Objectives
 
-Download the dataset from Kaggle and place Loan_default.csv in the project folder. Check the dataset's license on Kaggle before redistributing it.
+- Measure portfolio health through the default rate and NPA %.
+- Identify the loan purposes and borrower segments with the highest default risk.
+- Build a composite 0–100 credit risk score and group loans into Low, Medium and High risk tiers.
+- Check how many loans breach underwriting DTI limits and whether breaches default more.
+- Uncover "silent risk": borrowers with strong credit scores (700+) who still defaulted.
+- Show why a multi-factor score gives a fuller risk picture than a credit score alone.
 
+---
 
-Methodology
-1. Data cleaning (Python)
-Checked nulls, duplicate rows and duplicate loan IDs. The data had none.
-Renamed columns to snake_case (Default became default_flag, because default is a reserved word in SQL).
-Converted Yes/No columns (has_mortgage, has_dependents, has_cosigner) to 1/0.
-2. Feature engineering (Python)
-Feature	Definition
-age_group	18-29, 30-39, 40-49, 50-59, 60+
-income_group	Low / Medium / High (three equal-sized groups)
-borrower_segment	employment type + income group (12 segments)
-emi	monthly instalment from loan amount, interest rate and term
-emi_to_income	EMI divided by monthly income
-3. Composite credit risk score (0–100, higher = riskier)
+## 📊 Dataset Information
 
-Each factor is scaled to 0–100, then combined with fixed weights:
+- **Records:** 255,347 loans
+- **Features:** 18 original columns, plus 7 engineered columns
+- **Source:** Loan Default Prediction Dataset on Kaggle (`nikhil1e9/loan-default`), originally from Coursera's Loan Default Prediction Challenge
+- **Target:** `Default` (1 = defaulted, 0 = repaying)
 
+### Key Variables
+
+| Category | Features |
+| --- | --- |
+| Borrower Profile | Age, Education, Marital Status, Dependents |
+| Financial Profile | Income, Credit Score, DTI Ratio, Months Employed, Credit Lines, Mortgage |
+| Loan Details | Loan Amount, Interest Rate, Loan Term, Loan Purpose, Co-signer |
+| Outcome | Default |
+| Engineered Features | Age Group, Income Group, Borrower Segment, EMI, EMI-to-Income, Risk Score, Risk Tier |
+
+> The dataset is not included in this repository. Download `Loan_default.csv` from Kaggle and place it in the project folder.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Python:** data cleaning, feature engineering and the risk score
+- **Pandas:** data manipulation and transformation
+- **NumPy:** numerical calculations and risk tier logic
+- **SQLAlchemy:** database connection and data loading
+- **PostgreSQL:** data storage and SQL analysis
+- **SQL:** business queries using CTEs, window functions, JOINs and subqueries
+- **Jupyter Notebook:** analysis and data preparation workflow
+
+---
+
+## 🔄 Project Workflow
+
+### 1. Data Cleaning & Preparation
+
+- Inspected the data using `df.info()` and `df.describe()`
+- Checked for null values, duplicate rows and duplicate loan IDs (none found)
+- Standardized column names to snake_case
+- Renamed `Default` to `default_flag`, because `default` is a reserved word in SQL
+- Converted Yes/No columns to 1/0
+
+**Created new features including:**
+
+- `age_group`
+- `income_group`
+- `borrower_segment` (employment type + income group)
+- `emi` and `emi_to_income`
+
+### 2. Credit Risk Scoring
+
+Each risk factor was scaled to 0–100 and combined into one score, where a higher score means higher risk:
+
+```
 risk_score = 0.35 × credit risk + 0.35 × DTI risk + 0.30 × EMI-to-income risk
-Credit risk = (850 − credit score) / 550 × 100
-DTI risk = (DTI − 0.1) / 0.8 × 100
-EMI-to-income risk = scaled between the minimum and the 99th percentile (to limit the effect of extreme values)
+```
 
-Risk tiers: Low (below 33), Medium (33 to 66), High (66 and above).
+Loans were then grouped into tiers: **Low** (below 33), **Medium** (33 to 66) and **High** (66 and above).
 
-4. Load into PostgreSQL
+### 3. Database Integration
 
-The cleaned data is loaded into a loan table with pandas.to_sql. A small underwriting_policy reference table (DTI limit by loan purpose) is created for the policy-breach queries.
+- Loaded the cleaned dataset into PostgreSQL using `to_sql`
+- Created an `underwriting_policy` reference table with DTI limits by loan purpose
 
-SQL Questions Answered
+### 4. SQL Analysis
 
-#	Question	Concepts
+Wrote 14 queries answering business questions, including:
 
-Q1	Total loans, defaults and default rate	COUNT, SUM, AVG
+- Default rate and NPA % of the portfolio
+- Ranking loan purposes and borrower segments by default risk
+- Top 3 riskiest segments within each loan purpose
+- DTI policy breaches using a JOIN to the underwriting table
+- Silent risk among borrowers with 700+ credit scores
 
-Q2	NPA % of the portfolio	CASE WHEN
+---
 
-Q3	Rank loan purposes by default rate	RANK() window function
-Q4	Top 5 riskiest borrower segments	GROUP BY, LIMIT
-Q5	Default rate with vs without a co-signer	GROUP BY
-Q6	Defaulted loans bigger than the average loan	Subquery
-Q7	Loans and default rate in each risk tier	GROUP BY
-Q8	Default rate by credit score band	CTE + CASE WHEN
-Q9	Top 3 riskiest segments within each loan purpose	CTE + ROW_NUMBER()
-Q10	DTI policy breaches per loan purpose	JOIN
-Q11	Do DTI-breach loans default more?	JOIN + CASE WHEN
-Q12	Silent risk: defaulters with 700+ credit score	Subquery
-Q13	Default rate by risk tier among 700+ borrowers	WHERE + GROUP BY
-Q14	Loan amount and default rate by age group	GROUP BY
-Key Findings
-Portfolio health: 29,653 of 255,347 loans defaulted, a 11.61% default rate. The amount-based NPA is 13.15%.
-By loan purpose: Business loans are the riskiest at 12.33% and Home loans the safest at 10.23%.
-Risk tiers separate defaults. Default rates rise steadily from Low to High:
-Tier	Loans	Default rate
-Low	87,082	9.04%
-Medium	157,871	12.40%
-High	10,394	21.19%
-Borrower segments: unemployed, low-income borrowers default the most (18.5%), while full-time, high-income borrowers default the least (7.3%).
-Co-signers help: loans with a co-signer default at 10.36% vs 12.87% without one.
-Silent risk: 7,086 borrowers with a credit score of 700 or more still defaulted, which is 23.9% of all defaults. A credit-score-only screen would have approved all of them.
-The composite score sees what credit score misses. Among borrowers with 700+ credit scores, default rates still rise with the risk tier:
-Tier (700+ score only)	Borrowers	Default rate
-Low	47,133	8.80%
-Medium	22,205	13.09%
-High	92	34.78%
+## 📈 Key Insights
 
-The High group is only 92 borrowers, so treat that last rate as indicative only.
+- 29,653 of 255,347 loans defaulted, a **11.61% default rate**.
+- The amount-based **NPA % is 13.15%**.
+- Business loans were the riskiest purpose at 12.33%, and Home loans the safest at 10.23%.
+- Default rates rose steadily across the risk tiers: **9.04% (Low), 12.40% (Medium) and 21.19% (High)**.
+- Unemployed, low-income borrowers had the highest default rate (18.5%), and full-time, high-income borrowers the lowest (7.3%).
+- Loans with a co-signer defaulted less (10.36%) than loans without one (12.87%).
+- **7,086 borrowers with a credit score of 700 or more still defaulted**, which is 23.9% of all defaults.
+- Among 700+ credit score borrowers, default rates still rose with the risk tier: 8.80% (Low) and 13.09% (Medium). The High tier has only 92 borrowers, so its 34.78% rate is indicative only.
+- 60.9% of loans exceeded the illustrative DTI limits, and those loans defaulted slightly more (12.09%) than loans within the limits (10.88%).
 
-How to Run
-Get the data: download Loan_default.csv from Kaggle and put it in the project folder.
-Install the libraries:
-pip install pandas numpy sqlalchemy psycopg2-binary notebook
-Create a PostgreSQL database named bank_loan_portfolio (for example in pgAdmin).
-Open the notebook (python -m notebook), update the file path, and set your own PostgreSQL password in the connection cell. Do not commit your real password.
-Run the cells in order. The notebook builds the features and the risk score, then loads the loan and underwriting_policy tables.
-Run the SQL file in pgAdmin's Query Tool, one query at a time (highlight a query and press F5).
-Assumptions & Limitations
-NPA % is a proxy. The dataset has no outstanding balance, so NPA % = defaulted loan amount divided by total loan amount.
-The underwriting limits are illustrative. The DTI limits by loan purpose (Home 0.43, Auto 0.45, Education 0.40, Business 0.40, Other 0.36) are my own assumptions, not a real bank's policy. Replace them with real policy limits if you have them.
-The score weights are chosen by judgment. The 35/35/30 weights were fixed in advance, not tuned on the default outcome, to avoid overfitting.
-The data behaves like simulated data. Distributions are close to uniform and correlations are weak, so risk differences between groups are modest. Treat the results as a demonstration of method, not as findings about a real bank.
-Single-factor strength varies. In this dataset the EMI-to-income ratio is a stronger default signal than DTI alone, which is why the score combines several factors.
-Author
+---
 
-Kartik Patel LinkedIn · GitHub · kartikgpatel7@gmail.com
+## ⚠️ Assumptions & Limitations
+
+- **NPA % is a proxy.** The data has no outstanding balance, so it is calculated as defaulted loan amount divided by total loan amount.
+- **The DTI limits are illustrative.** The limits by loan purpose are my own assumptions, not a real bank's policy.
+- **The score weights are chosen by judgment** and were not tuned on the default outcome.
+- **The dataset behaves like simulated data.** Distributions are close to uniform and relationships are weak, so the results demonstrate the method rather than describe a real bank.
+
+---
+
+## 📁 Project Structure
+
+```
+Bank-Loan-Portfolio-Default-Risk-Analysis/
+├── Bank_Loan_Default_Analysis.ipynb          # cleaning, features, risk score, load to PostgreSQL
+├── Bank_Loan_Default_Analysis_Queries.sql    # 14 SQL business questions with queries
+└── README.md
+```
+
+---
+
+## ▶️ How to Run
+
+1. Download `Loan_default.csv` from Kaggle and place it in the project folder.
+2. Install the libraries: `pip install pandas numpy sqlalchemy psycopg2-binary notebook`
+3. Create a PostgreSQL database named `bank_loan_portfolio`.
+4. Open the notebook, set your own PostgreSQL password in the connection cell, and run all cells in order.
+5. Open pgAdmin's Query Tool on the database and run the queries from the SQL file one at a time.
+
+---
+
+## 👤 Author
+
+**Kartik Patel**
+[LinkedIn](https://www.linkedin.com/in/kartik-patel-160aa2287) · [GitHub](https://github.com/cartik7) · kartikgpatel7@gmail.com
+
+---
+
+**⭐ If you found this project useful, consider giving it a star.**
