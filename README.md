@@ -52,9 +52,13 @@ Risk tiers: Low (below 33), Medium (33 to 66), High (66 and above).
 The cleaned data is loaded into a loan table with pandas.to_sql. A small underwriting_policy reference table (DTI limit by loan purpose) is created for the policy-breach queries.
 
 SQL Questions Answered
+
 #	Question	Concepts
+
 Q1	Total loans, defaults and default rate	COUNT, SUM, AVG
+
 Q2	NPA % of the portfolio	CASE WHEN
+
 Q3	Rank loan purposes by default rate	RANK() window function
 Q4	Top 5 riskiest borrower segments	GROUP BY, LIMIT
 Q5	Default rate with vs without a co-signer	GROUP BY
